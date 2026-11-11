@@ -1,0 +1,524 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Doppelkopf">
+<meta name="theme-color" content="#1D6A4B">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>Doppelkopf-Block</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: ein Spielblock auf dem Tisch. Titel und Tabs oben, darunter Zettel mit großen Zahlen. Grün wie Filz, Rot nur für Minuspunkte. */
+:root{
+  --bg:#EDF1EC;--surface:#F9FBF8;--sunk:#E1E8E0;--ink:#16221C;--muted:#586861;--line:#C6D0C6;
+  --accent:#1D6A4B;--on-accent:#FFFFFF;--pos:#1D6A4B;--neg:#B0352D;--warn:#8F6310;
+  --display:"Bricolage Grotesque",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --body:"Inter",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0E1713;--surface:#16231D;--sunk:#1E2E26;--ink:#E7EEE8;--muted:#93A59B;--line:#2C3F35;
+  --accent:#4FB88A;--on-accent:#06281A;--pos:#5FD0A0;--neg:#FF8A80;--warn:#E3B45A;color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0E1713;--surface:#16231D;--sunk:#1E2E26;--ink:#E7EEE8;--muted:#93A59B;--line:#2C3F35;
+  --accent:#4FB88A;--on-accent:#06281A;--pos:#5FD0A0;--neg:#FF8A80;--warn:#E3B45A;color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:15px/1.45 var(--body);padding-block:20px 56px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:720px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+#main{display:flex;flex-direction:column;gap:14px}
+h1{font:800 clamp(28px,8vw,36px)/1.05 var(--display);letter-spacing:-.01em;margin:0;text-wrap:balance}
+h2{font:700 19px/1.2 var(--display);margin:0;text-wrap:balance}
+h3{font:700 13px/1.2 var(--body);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:0}
+p{margin:0}
+.eyebrow{font:600 11px/1 var(--body);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.muted{color:var(--muted)}
+.top{display:flex;flex-direction:column;gap:8px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.tag{display:inline-block;font:600 11px/1 var(--body);padding:4px 7px;border-radius:5px;background:var(--sunk);color:var(--muted);white-space:nowrap}
+.tag.bk{background:var(--accent);color:var(--on-accent)}
+.tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;padding:4px;background:var(--sunk);border-radius:12px}
+.tabs button{border:0;background:transparent;padding:10px 6px;border-radius:9px;font-weight:600;color:var(--muted);cursor:pointer;font-family:inherit;font-size:14px}
+.tabs button[aria-selected="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 0 var(--line)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.row{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn{border:1px solid var(--line);background:var(--surface);padding:11px 14px;border-radius:10px;font-weight:600}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.btn.danger{color:var(--neg);border-color:currentColor}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.link{border:0;background:none;padding:0;color:var(--accent);font-weight:600;text-decoration:underline}
+.chip{border:1px solid var(--line);background:var(--surface);padding:10px 14px;border-radius:999px;font-weight:600}
+.chip[aria-pressed="true"]{background:var(--accent);color:var(--on-accent);border-color:var(--accent)}
+.chip:disabled{opacity:.5;cursor:not-allowed}
+.seg{display:flex;flex-wrap:wrap;gap:8px}
+input[type=text],input[type=number],select,textarea{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px;width:100%;min-width:0}
+textarea{min-height:84px;resize:vertical}
+input[type=range]{width:100%;accent-color:var(--accent)}
+.fld{display:flex;flex-direction:column;gap:5px;min-width:0}
+.fld>span{font-size:12.5px;font-weight:600;color:var(--muted)}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.note{background:var(--sunk);border-radius:10px;padding:11px 13px;font-size:13.5px;display:flex;flex-direction:column;gap:8px;align-items:flex-start}
+.warn{color:var(--warn);font-weight:600}
+.rank{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:14px}
+.rk{display:grid;grid-template-columns:22px minmax(0,1fr) auto;column-gap:10px;row-gap:7px;align-items:baseline}
+.rk .n{font:700 14px var(--display);color:var(--muted)}
+.rk .nm{font-weight:600;overflow-wrap:anywhere}
+.rk .nm small{display:block;font-weight:400;color:var(--muted);font-size:12px}
+.rk .tot{font:800 26px/1 var(--display);font-variant-numeric:tabular-nums}
+.bar{grid-column:2/4;height:6px;background:var(--sunk);border-radius:3px;position:relative}
+.bar i{position:absolute;top:0;bottom:0;border-radius:3px}
+.bar i.p{left:50%;background:var(--pos)}
+.bar i.m{right:50%;background:var(--neg)}
+.bar::after{content:"";position:absolute;left:50%;top:-2px;bottom:-2px;width:1px;background:var(--muted);opacity:.7}
+.pos{color:var(--pos)}.neg{color:var(--neg)}
+.scroll{overflow-x:auto}
+table.hist{border-collapse:collapse;width:100%;min-width:max-content;font-variant-numeric:tabular-nums}
+.hist th,.hist td{padding:8px 10px;text-align:center;border-bottom:1px solid var(--line);white-space:nowrap}
+.hist thead th{font:600 12px var(--body);color:var(--muted)}
+.hist tbody th,.hist thead th:first-child,.hist tfoot th{text-align:left;position:sticky;left:0;background:var(--surface);z-index:1}
+.hist td b{display:block;font:700 15px var(--display)}
+.hist td small{color:var(--muted);font-size:11px}
+.hist td.re{background:color-mix(in srgb,var(--accent) 13%,var(--surface))}
+.hist td.sit{color:var(--muted)}
+.hist tfoot th,.hist tfoot td{font:800 16px var(--display);border-bottom:0;border-top:2px solid var(--ink)}
+.rowbtn{border:1px solid var(--line);background:var(--surface);border-radius:8px;min-width:34px;height:30px;font-weight:700}
+.opt{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:11px 0;border-top:1px solid var(--line)}
+.opt.first{border-top:0}
+.ot b{display:block;font-weight:600}
+.ot small{display:block;color:var(--muted);font-size:12.5px}
+.opt input[type=number]{width:76px;text-align:center}
+.sw{appearance:none;-webkit-appearance:none;flex:none;width:46px;height:28px;border-radius:14px;background:var(--sunk);border:1px solid var(--line);position:relative;cursor:pointer;margin:0}
+.sw::after{content:"";position:absolute;top:2px;left:2px;width:22px;height:22px;border-radius:50%;background:var(--surface);border:1px solid var(--line);transition:transform .15s}
+.sw:checked{background:var(--accent);border-color:var(--accent)}
+.sw:checked::after{transform:translateX(18px)}
+.sw:disabled{opacity:.45;cursor:not-allowed}
+.meter{height:12px;border-radius:6px;background:var(--sunk);position:relative;overflow:hidden}
+.meter i{display:block;height:100%;background:var(--accent)}
+.meter::after{content:"";position:absolute;left:50%;top:0;bottom:0;width:2px;background:var(--ink);opacity:.5}
+.eyes{display:flex;justify-content:space-between;font-weight:600}
+.eyes output{font:800 20px var(--display);font-variant-numeric:tabular-nums}
+.ex{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:8px 14px;align-items:center}
+.ex .hd{font-size:12px;font-weight:600;color:var(--muted);text-align:center}
+.ex small{display:block;color:var(--muted);font-size:12px}
+.step{display:inline-flex;align-items:center;gap:6px}
+.step button{width:38px;height:38px;border-radius:9px;border:1px solid var(--line);background:var(--surface);font-weight:700;font-size:18px;padding:0}
+.step output{min-width:20px;text-align:center;font:700 16px var(--display);font-variant-numeric:tabular-nums}
+.verdict{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:baseline}
+.verdict b{font:800 20px var(--display)}
+.why{font-size:13px;color:var(--muted)}
+.res{display:grid;grid-template-columns:repeat(auto-fit,minmax(104px,1fr));gap:8px}
+.res div{background:var(--sunk);border-radius:10px;padding:9px 11px;min-width:0}
+.res span{display:block;font-size:12.5px;color:var(--muted);overflow-wrap:anywhere}
+.res b{font:800 22px/1.1 var(--display);font-variant-numeric:tabular-nums}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style></head><body>
+<div class="wrap">
+  <header class="top">
+    <span class="eyebrow">Spielblock für 4 bis 6 Spieler</span>
+    <h1>Doppelkopf-Block</h1>
+    <div class="chips" id="sub"></div>
+  </header>
+  <nav class="tabs" aria-label="Bereiche">
+    <button data-act="tab" data-tab="block">Block</button>
+    <button data-act="tab" data-tab="runde">Neue Runde</button>
+    <button data-act="tab" data-tab="regeln">Regeln</button>
+  </nav>
+  <main id="main"></main>
+</div>
+<script>
+'use strict';
+const KEY='doko-block-v1';
+const DEF={gegenAlte:true,gewinnstufen:true,ansagen:true,gebrocheneAbsage:true,fuchs:true,doppelkopf:true,karlchen:true,soloFaktor:3,
+  bock:true,bockSolo:true,bockSchwarz:false,bockBeide:false,bockPatt:false,bockLen:4,bockFaktor:2,
+  pflichtsolo:true,pflichtKeinBock:true,
+  table:{schwein:true,hochzeit:true,armut:true,dulle:false,neunen:false},notes:''};
+const TBL=[['schwein','Schweinchen','Beide Karo-Asse sind höchste Trümpfe'],['hochzeit','Hochzeit','Beide Kreuz-Damen auf einer Hand'],
+  ['armut','Armut','Wer höchstens 3 Trümpfe hat, gibt sie ab'],['dulle','Zweite Dulle sticht die erste',''],['neunen','Mit Neunen','Kartensatz mit 9ern']];
+const ANN=['Keine Ansage','Re / Kontra','Keine 90','Keine 60','Keine 30','Schwarz'];
+const SOLOS=['Kreuz','Pik','Herz','Karo','Bube','Dame','Fleischlos'];
+const EXMAX={rf:2,kf:2,rd:6,kd:6,rk:1,kk:1};
+let S=null;
+
+const clone=o=>JSON.parse(JSON.stringify(o));
+const clamp=(v,a,b)=>Math.min(b,Math.max(a,Number.isFinite(v)?v:a));
+const fmt=n=>n>0?'+'+n:n<0?'−'+(-n):'0';
+const cl=n=>n>0?'pos':n<0?'neg':'';
+const nm=i=>(S.players[i]&&S.players[i].trim())||('Spieler '+(i+1));
+const sitFor=(d,n)=>n===5?[d]:n===6?[d,(d+3)%6]:[];
+
+function blank(dealer){
+  const n=S.players.length;
+  return {type:'normal',re:[],reEyes:120,reAnn:0,konAnn:0,ex:{rf:0,kf:0,rd:0,kd:0,rk:0,kk:0},
+    dealer,sit:sitFor(dealer,n),soloKind:'Kreuz',pflicht:false,manualBock:0};
+}
+
+function seed(){
+  S={players:['Anna','Ben','Chris','Dana'],settings:clone(DEF),rounds:[],startBock:0,example:true};
+  const b=(o,d)=>Object.assign(blank(d),o);
+  const z={rf:0,kf:0,rd:0,kd:0,rk:0,kk:0};
+  S.rounds=[
+    b({re:[0,2],reEyes:134,ex:Object.assign({},z,{rf:1})},0),
+    b({re:[1,3],reEyes:98},1),
+    b({type:'solo',soloKind:'Karo',re:[2],reEyes:126},2),
+    b({re:[0,3],reEyes:151,reAnn:1},3)
+  ];
+  return S;
+}
+
+function problem(r){
+  const act=[...Array(S.players.length).keys()].filter(i=>!r.sit.includes(i));
+  const re=r.re.filter(i=>act.includes(i));
+  if(r.type==='solo'&&re.length!==1)return 'Solist wählen';
+  if(r.type==='hochzeit'&&(re.length<1||re.length>2))return 'Hochzeit: 1 oder 2 Spieler wählen';
+  if((r.type==='normal'||r.type==='armut')&&re.length!==2)return 'Re-Partei: noch '+(2-re.length)+' Spieler wählen';
+  return '';
+}
+
+function score(r,st,bockFlag){
+  const n=S.players.length;
+  const act=[...Array(n).keys()].filter(i=>!r.sit.includes(i));
+  const re=r.re.filter(i=>act.includes(i));
+  const kon=act.filter(i=>!re.includes(i));
+  const reE=clamp(Math.round(r.reEyes),0,240),konE=240-reE;
+  const aR=st.ansagen?r.reAnn:0,aK=st.ansagen?r.konAnn:0;
+  const need=[121,121,151,181,211,240];
+  const reFail=aR>=2&&reE<need[aR];
+  const konFail=aK>=2&&konE<need[aK];
+  let winner;
+  if(reFail&&!konFail)winner='kon';
+  else if(konFail&&!reFail)winner='re';
+  else winner=reE>=121?'re':'kon';
+  const loserE=winner==='re'?konE:reE;
+  const lines=[['Gewonnen',1]];let V=1;
+  if(winner==='kon'&&st.gegenAlte&&(r.type==='normal'||r.type==='hochzeit')){V++;lines.push(['Gegen die Alten',1]);}
+  if(st.ansagen){
+    [['Re',aR],['Kontra',aK]].forEach(([p,a])=>{
+      if(a>=1){V+=2;lines.push([p+' angesagt',2]);}
+      for(let k=2;k<=a;k++){V++;lines.push([p+': '+ANN[k].toLowerCase(),1]);}
+    });
+  }
+  if(st.gewinnstufen){
+    [[90,'Verlierer unter 90'],[60,'unter 60'],[30,'unter 30']].forEach(([t,l])=>{if(loserE<t){V++;lines.push([l,1]);}});
+    if(loserE===0){V++;lines.push(['Schwarz',1]);}
+  }
+  if(st.ansagen&&st.gebrocheneAbsage){
+    [['Re',aR,konE],['Kontra',aK,reE]].forEach(([p,a,oe])=>{
+      [90,60,30,1].forEach((t,k)=>{if(a>=k+2&&oe>=t){V++;lines.push(['Absage von '+p+' gebrochen ('+ANN[k+2].toLowerCase()+')',1]);}});
+    });
+  }
+  const ex=r.ex||{};
+  const sR=(st.fuchs?ex.rf||0:0)+(st.doppelkopf?ex.rd||0:0)+(st.karlchen?ex.rk||0:0);
+  const sK=(st.fuchs?ex.kf||0:0)+(st.doppelkopf?ex.kd||0:0)+(st.karlchen?ex.kk||0:0);
+  const f=bockFlag&&st.bock?st.bockFaktor:1;
+  const net=((winner==='re'?V:-V)+sR-sK)*f;
+  const sf=re.length===1?st.soloFaktor:1;
+  const pts=Array(n).fill(0);
+  re.forEach(i=>{pts[i]=net*sf;});
+  kon.forEach(i=>{pts[i]=0-net;});
+  return {pts,winner,V,sR,sK,net,f,sf,lines,reE,konE,re,kon,loserE,aR,aK};
+}
+
+function replay(){
+  const st=S.settings,n=S.players.length;
+  let left=(S.startBock||0)*st.bockLen;
+  const tot=Array(n).fill(0),solos=Array(n).fill(0),rows=[];
+  S.rounds.forEach(r=>{
+    const bockFlag=st.bock&&left>0;
+    if(bockFlag)left--;
+    const res=score(r,st,bockFlag);
+    res.pts.forEach((p,i)=>{tot[i]+=p;});
+    rows.push({r,res,bockFlag,cum:tot.slice()});
+    let trig=false;
+    if(st.bock){
+      if(st.bockSolo&&r.type==='solo'&&!(st.pflichtsolo&&st.pflichtKeinBock&&r.pflicht))trig=true;
+      if(st.bockSchwarz&&res.loserE===0)trig=true;
+      if(st.bockBeide&&res.aR>=1&&res.aK>=1)trig=true;
+      if(st.bockPatt&&res.reE===120)trig=true;
+      left+=(trig?st.bockLen:0)+(r.manualBock||0)*st.bockLen;
+    }
+    if(r.type==='solo'&&r.re[0]!==undefined)solos[r.re[0]]++;
+  });
+  return {rows,tot,solos,bockLeft:left};
+}
+
+function summaryText(){
+  const R=replay(),n=S.players.length;
+  const ord=[...Array(n).keys()].sort((a,b)=>R.tot[b]-R.tot[a]||a-b);
+  return 'Doppelkopf – Stand nach '+S.rounds.length+' Runden\n'+ord.map((i,k)=>(k+1)+'. '+nm(i)+': '+fmt(R.tot[i])).join('\n');
+}
+
+/* ---------- Oberfläche ---------- */
+let view='block',draft=null,editing=-1,confirmKey='',shareText='',msg='',curBock=false;
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+function load(){
+  try{
+    const o=JSON.parse(localStorage.getItem(KEY)||'null');
+    if(o&&Array.isArray(o.players)&&Array.isArray(o.rounds)){
+      o.settings=Object.assign(clone(DEF),o.settings||{});
+      o.settings.table=Object.assign(clone(DEF.table),(o.settings||{}).table||{});
+      return o;
+    }
+  }catch(e){}
+  return null;
+}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
+function nextDealer(){const n=S.players.length,l=S.rounds[S.rounds.length-1];return l?(l.dealer+1)%n:0;}
+function soloBefore(i){const lim=editing>=0?editing:S.rounds.length;return S.rounds.slice(0,lim).filter(r=>r.type==='solo'&&r.re[0]===i).length;}
+const typeLabel=r=>r.type==='solo'?'Solo '+r.soloKind:r.type==='hochzeit'?'Hochzeit':r.type==='armut'?'Armut':'';
+
+function blockHTML(R){
+  const st=S.settings,n=S.players.length,rows=R.rows;
+  const nd=nextDealer(),sit=sitFor(nd,n),nextBock=st.bock&&R.bockLeft>0;
+  let h='';
+  if(S.example)h+=`<div class="note"><span><b>Beispielpartie.</b> Die vier Runden zeigen, wie der Block rechnet. Mit „Eigene Partie“ startest du leer und trägst Namen und Regeln ein.</span><button class="btn" data-act="startOwn">Eigene Partie starten</button></div>`;
+  h+=`<section class="card"><div class="row"><div><span class="eyebrow">Nächste Runde</span><h2>Runde ${rows.length+1} ${nextBock?`<span class="tag bk">Bock ×${st.bockFaktor}</span>`:''}</h2></div><button class="btn pri" data-act="new">Runde eintragen</button></div>
+  <p class="muted">Geber: <b>${esc(nm(nd))}</b>${n>4?' · Aussetzer: '+sit.map(i=>esc(nm(i))).join(', '):''}</p>`;
+  if(st.bock)h+=`<p class="muted">${R.bockLeft>0?'Bock: noch '+R.bockLeft+' Spiele':'Kein Bock aktiv'} · <button class="link" data-act="bockPlus">Bockrunde einlegen</button></p>`;
+  h+='</section>';
+  const order=[...Array(n).keys()].sort((a,b)=>R.tot[b]-R.tot[a]||a-b);
+  const mx=Math.max(1,...R.tot.map(Math.abs));
+  h+=`<section class="card"><h3>Rangliste</h3><ol class="rank">`+order.map((i,k)=>{
+    const t=R.tot[i],w=Math.abs(t)/mx*50;
+    const sub=st.pflichtsolo?`<small>${R.solos[i]>0?'Solo gespielt':'Pflichtsolo offen'}</small>`:'';
+    return `<li class="rk"><span class="n">${k+1}</span><span class="nm">${esc(nm(i))}${sub}</span><span class="tot ${cl(t)}">${fmt(t)}</span><span class="bar"><i class="${t>=0?'p':'m'}" style="width:${w}%"></i></span></li>`;
+  }).join('')+`</ol></section>`;
+  h+=`<section class="card"><h3>Runden</h3>`;
+  if(!rows.length)h+=`<p class="muted">Noch keine Runde. Re-Partei, Augen und Ansagen reichen für den Eintrag.</p>`;
+  else{
+    h+=`<div class="scroll"><table class="hist"><thead><tr><th>Nr.</th>${S.players.map((_,i)=>`<th>${esc(nm(i))}</th>`).join('')}</tr></thead><tbody>`;
+    rows.forEach((x,k)=>{
+      const tags=(typeLabel(x.r)?`<span class="tag">${esc(typeLabel(x.r))}</span> `:'')+(x.bockFlag?`<span class="tag bk">Bock</span>`:'');
+      h+=`<tr><th scope="row"><button class="rowbtn" data-act="edit" data-i="${k}" aria-label="Runde ${k+1} bearbeiten">${k+1}</button> ${tags}</th>`;
+      S.players.forEach((_,i)=>{
+        if(x.r.sit.includes(i))h+=`<td class="sit">–</td>`;
+        else{const d=x.res.pts[i];h+=`<td class="${x.res.re.includes(i)?'re':''}"><b class="${cl(d)}">${fmt(d)}</b><small>${x.cum[i]}</small></td>`;}
+      });
+      h+='</tr>';
+    });
+    h+=`</tbody><tfoot><tr><th>Summe</th>${R.tot.map(t=>`<td class="${cl(t)}">${fmt(t)}</td>`).join('')}</tr></tfoot></table></div>
+    <p class="why">Getönte Felder: Re-Partei. Kleine Zahl: Zwischenstand. Nummer antippen zum Bearbeiten.</p>`;
+  }
+  h+=`</section><div class="row"><button class="btn" data-act="copy">Stand kopieren</button></div>`;
+  if(shareText)h+=`<div class="card" role="status"><p class="muted">${esc(msg)}</p><textarea id="sharebox" readonly>${esc(shareText)}</textarea></div>`;
+  return h;
+}
+
+function evPreview(){
+  const p=problem(draft);
+  if(p)return `<p class="warn">${esc(p)}</p>`;
+  const st=S.settings,r=score(draft,st,curBock);
+  const extra=[];
+  if(r.sR||r.sK)extra.push(`Sonderpunkte Re ${r.sR}, Kontra ${r.sK}`);
+  if(r.f>1)extra.push(`Bock ×${r.f}`);
+  if(r.sf>1)extra.push(`Solo ×${r.sf} für den Solisten`);
+  return `<div class="verdict"><b>${r.winner==='re'?'Re gewinnt':'Kontra gewinnt'}</b><span class="muted">${r.reE} : ${r.konE} Augen · Spielwert ${r.V}</span></div>
+  <p class="why">${r.lines.map(l=>esc(l[0])+' '+l[1]).join(' · ')}${extra.length?' · '+extra.join(' · '):''}</p>
+  <div class="res">${[...r.re,...r.kon].sort((a,b)=>a-b).map(i=>`<div><span>${esc(nm(i))}</span><b class="${cl(r.pts[i])}">${fmt(r.pts[i])}</b></div>`).join('')}</div>`;
+}
+
+function updatePreview(){
+  const d=draft,e=clamp(Math.round(d.reEyes),0,240);
+  const set=(id,v)=>{const el=$(id);if(el)el.textContent=v;};
+  set('#reE',e);set('#konE',240-e);
+  const m=$('#mRe');if(m)m.style.width=(e/240*100)+'%';
+  const pv=$('#preview');if(pv)pv.innerHTML=evPreview();
+  const sb=$('#saveBtn');if(sb)sb.disabled=!!problem(d);
+}
+
+function stepper(k,v){return `<span class="step"><button data-act="ex" data-k="${k}" data-d="-1" aria-label="weniger">−</button><output>${v}</output><button data-act="ex" data-k="${k}" data-d="1" aria-label="mehr">+</button></span>`;}
+
+function rundeHTML(R){
+  const st=S.settings,n=S.players.length,d=draft,idx=editing>=0?editing:S.rounds.length;
+  curBock=st.bock&&(editing>=0?R.rows[editing].bockFlag:R.bockLeft>0);
+  const act=[...Array(n).keys()].filter(i=>!d.sit.includes(i));
+  const types=[['normal','Normal'],['hochzeit','Hochzeit'],['armut','Armut'],['solo','Solo']];
+  const e=clamp(Math.round(d.reEyes),0,240);
+  const opts=(sel)=>ANN.map((a,i)=>`<option value="${i}" ${i===sel?'selected':''}>${a}</option>`).join('');
+  let h=`<section class="card"><div class="row"><h2>Runde ${idx+1}${editing>=0?' bearbeiten':''}</h2>${curBock?`<span class="tag bk">Bock ×${st.bockFaktor}</span>`:''}</div>
+  <label class="fld"><span>Geber${n>4?' (setzt aus: '+d.sit.map(i=>esc(nm(i))).join(', ')+')':''}</span><select id="dealer" data-f="dealer">${S.players.map((_,i)=>`<option value="${i}" ${i===d.dealer?'selected':''}>${esc(nm(i))}</option>`).join('')}</select></label>
+  <div><h3>Spielart</h3></div><div class="seg">${types.map(([v,l])=>`<button class="chip" data-act="type" data-v="${v}" aria-pressed="${d.type===v}">${l}</button>`).join('')}</div>`;
+  if(d.type==='solo'){
+    h+=`<div class="grid2"><label class="fld"><span>Soloart</span><select id="solokind" data-f="soloKind">${SOLOS.map(s=>`<option ${s===d.soloKind?'selected':''}>${s}</option>`).join('')}</select></label></div>`;
+    if(st.pflichtsolo)h+=`<label class="opt first"><span class="ot"><b>Pflichtsolo</b><small>Zählt als Pflichtsolo dieses Spielers</small></span><input type="checkbox" class="sw" id="pflicht" data-f="pflicht" ${d.pflicht?'checked':''}></label>`;
+  }
+  h+=`<div><h3>${d.type==='solo'?'Wer spielt Solo?':'Re-Partei (Kreuz-Damen)'}</h3></div><div class="seg">${act.map(i=>`<button class="chip" data-act="re" data-i="${i}" aria-pressed="${d.re.includes(i)}">${esc(nm(i))}</button>`).join('')}</div>
+  ${d.type==='hochzeit'?'<p class="why">Ohne Partner nur den Spieler mit der Hochzeit wählen, er zählt dann wie ein Solist.</p>':''}</section>`;
+  h+=`<section class="card"><h3>Augen</h3><div class="eyes"><span>Re <output id="reE">${e}</output></span><span>Kontra <output id="konE">${240-e}</output></span></div>
+  <div class="meter" aria-hidden="true"><i id="mRe" style="width:${e/240*100}%"></i></div>
+  <input type="range" id="eyesR" min="0" max="240" step="1" value="${e}" aria-label="Augen der Re-Partei">
+  <label class="fld"><span>Augen der Re-Partei (0 bis 240)</span><input type="number" id="eyes" inputmode="numeric" min="0" max="240" value="${e}"></label></section>`;
+  if(st.ansagen)h+=`<section class="card"><h3>Ansagen</h3><div class="grid2"><label class="fld"><span>Re-Partei</span><select id="annRe" data-f="reAnn">${opts(d.reAnn)}</select></label>
+  <label class="fld"><span>Kontra-Partei</span><select id="annKon" data-f="konAnn">${opts(d.konAnn)}</select></label></div>
+  <p class="why">Jede Stufe schließt die davor ein. Wer eine Absage nicht schafft, verliert.</p></section>`;
+  const exr=[['f','Fuchs gefangen','Karo-Ass des Gegners',st.fuchs],['d','Doppelkopf','Stich mit 40+ Augen',st.doppelkopf],['k','Karlchen','Letzter Stich mit Kreuz-Bube',st.karlchen]].filter(x=>x[3]);
+  if(exr.length)h+=`<section class="card"><h3>Sonderpunkte</h3><div class="ex"><span></span><span class="hd">Re</span><span class="hd">Kontra</span>`+
+    exr.map(([c,l,s])=>`<span>${l}<small>${s}</small></span>${stepper('r'+c,d.ex['r'+c])}${stepper('k'+c,d.ex['k'+c])}`).join('')+`</div></section>`;
+  h+=`<section class="card"><h3>Ergebnis</h3><div id="preview">${evPreview()}</div>`;
+  if(st.bock)h+=`<label class="opt first"><span class="ot"><b>Bockrunde einlegen</b><small>Die nächsten ${st.bockLen} Spiele zählen ×${st.bockFaktor}</small></span><input type="checkbox" class="sw" id="manualBock" data-f="manualBock" ${d.manualBock?'checked':''}></label>`;
+  h+=`<div class="row"><button class="btn pri" id="saveBtn" data-act="save" ${problem(d)?'disabled':''}>${editing>=0?'Änderung speichern':'Runde speichern'}</button>
+  <button class="btn" data-act="cancel">Abbrechen</button>${editing>=0?`<button class="btn danger" data-act="del">${confirmKey==='del'?'Ja, Runde löschen':'Runde löschen'}</button>`:''}</div></section>`;
+  return h;
+}
+
+function tg(k,t,h,opt){
+  const st=S.settings;opt=opt||{};
+  return `<label class="opt ${opt.first?'first':''}"><span class="ot"><b>${t}</b>${h?`<small>${h}</small>`:''}</span><input type="checkbox" class="sw" data-set="${k}" ${st[k]?'checked':''} ${opt.dis?'disabled':''}></label>`;
+}
+function nu(k,t,h,min,max,first){
+  return `<label class="opt ${first?'first':''}"><span class="ot"><b>${t}</b>${h?`<small>${h}</small>`:''}</span><input type="number" inputmode="numeric" data-set="${k}" min="${min}" max="${max}" value="${S.settings[k]}"></label>`;
+}
+
+function regelnHTML(){
+  const st=S.settings,n=S.players.length,locked=S.rounds.length>0;
+  let h=`<section class="card"><h3>Spieler</h3><div class="seg">${[4,5,6].map(v=>`<button class="chip" data-act="count" data-v="${v}" aria-pressed="${n===v}" ${locked?'disabled':''}>${v} Spieler</button>`).join('')}</div>
+  <p class="why">${locked?'Die Spielerzahl lässt sich nur vor der ersten Runde ändern.':n===5?'Bei 5 Spielern setzt der Geber aus.':n===6?'Bei 6 Spielern setzen der Geber und der Spieler drei Plätze weiter aus.':'Alle vier spielen jede Runde.'}</p>
+  <div class="grid2">${S.players.map((p,i)=>`<label class="fld"><span>Spieler ${i+1}</span><input type="text" maxlength="14" data-name="${i}" value="${esc(p)}" autocomplete="off"></label>`).join('')}</div></section>`;
+  h+=`<section class="card"><h3>Wertung</h3><p class="why">Die Punkte wandern von den Verlierern zu den Gewinnern. Die Summe aller Spieler bleibt immer 0.</p>
+  ${tg('gegenAlte','Gegen die Alten','+1, wenn Kontra gewinnt (Normalspiel, Hochzeit)',{first:1})}
+  ${tg('gewinnstufen','Gewinnstufen','+1 je Stufe: Verlierer unter 90, 60, 30 oder schwarz')}
+  ${tg('ansagen','Ansagen und Absagen','Re/Kontra +2, jede Absage +1 (keine 90, 60, 30, schwarz)')}
+  ${tg('gebrocheneAbsage','Gebrochene Absage','+1 je Stufe, wenn der Gegner die Augen für die Absage knackt',{dis:!st.ansagen})}
+  ${tg('fuchs','Fuchs gefangen','+1 je gefangenem Karo-Ass des Gegners')}
+  ${tg('doppelkopf','Doppelkopf','+1 für einen Stich mit mindestens 40 Augen')}
+  ${tg('karlchen','Karlchen Müller','+1 für den letzten Stich mit dem Kreuz-Buben')}
+  ${nu('soloFaktor','Solo-Faktor','Solist bekommt das Vielfache, jeder Gegner einfach',1,9)}</section>`;
+  h+=`<section class="card"><h3>Bockrunden</h3>${tg('bock','Bockrunden verwenden','Alle Punkte der Bockspiele werden vervielfacht',{first:1})}`;
+  if(st.bock){
+    h+=`${tg('bockSolo','Bock nach Solo','')}${tg('bockSchwarz','Bock nach Schwarz','Verlierer hat 0 Augen')}${tg('bockBeide','Bock bei Re und Kontra','Beide Parteien haben angesagt')}${tg('bockPatt','Bock bei 120 : 120','')}
+    ${nu('bockLen','Spiele pro Bock','Standard: eine Runde, alle einmal Geber',1,12)}${nu('bockFaktor','Bock-Faktor','Gilt für das ganze Spiel inklusive Sonderpunkte',2,5)}`;
+  }
+  h+=`</section><section class="card"><h3>Pflichtsolo</h3>${tg('pflichtsolo','Pflichtsolo mitzählen','Der Block zeigt, wer noch ein Solo schuldet',{first:1})}`;
+  if(st.pflichtsolo&&st.bock&&st.bockSolo)h+=tg('pflichtKeinBock','Pflichtsolo löst keinen Bock aus','');
+  h+=`</section><section class="card"><h3>Regeln am Tisch</h3><p class="why">Nur zur Erinnerung. Diese Haken ändern die Wertung nicht und erscheinen oben als Hinweis.</p>`+
+    TBL.map(([k,t,s],i)=>`<label class="opt ${i?'':'first'}"><span class="ot"><b>${t}</b>${s?`<small>${s}</small>`:''}</span><input type="checkbox" class="sw" data-tbl="${k}" ${st.table[k]?'checked':''}></label>`).join('')+
+    `<label class="fld"><span>Eigene Hausregeln</span><textarea data-notes="1" maxlength="400" placeholder="z. B. Kontra darf bis zur 2. Karte ansagen">${esc(st.notes||'')}</textarea></label></section>`;
+  h+=`<section class="card"><h3>Partie</h3><div class="row"><button class="btn danger" data-act="newGame">${confirmKey==='new'?'Ja, alle Runden löschen':'Neue Partie (Runden löschen)'}</button>
+  <button class="btn" data-act="resetSet">${confirmKey==='set'?'Ja, zurücksetzen':'Regeln auf Standard'}</button></div></section>`;
+  return h;
+}
+
+function render(){
+  document.querySelectorAll('.tabs button').forEach(b=>b.setAttribute('aria-selected',String(b.dataset.tab===view)));
+  const R=replay(),st=S.settings;
+  const rules=TBL.filter(t=>st.table[t[0]]).map(t=>`<span class="tag">${t[1]}</span>`).join('');
+  $('#sub').innerHTML=`<span class="tag">${S.players.length} Spieler</span><span class="tag">${S.rounds.length} Runden</span>${rules}`;
+  if(view==='runde'&&!draft)draft=blank(nextDealer());
+  $('#main').innerHTML=view==='block'?blockHTML(R):view==='runde'?rundeHTML(R):regelnHTML();
+}
+
+function go(t){view=t;confirmKey='';render();window.scrollTo(0,0);}
+function startDraft(i){editing=i;draft=i<0?blank(nextDealer()):clone(S.rounds[i]);confirmKey='';go('runde');}
+function refocus(sel){const el=sel&&document.querySelector(sel);if(el)el.focus();}
+
+function fixSoloFlag(){
+  if(draft.type==='solo'&&draft.re.length===1)draft.pflicht=S.settings.pflichtsolo&&soloBefore(draft.re[0])===0;
+}
+
+function onClick(e){
+  const b=e.target.closest('[data-act]');if(!b)return;
+  const a=b.dataset.act,v=b.dataset.v,i=+b.dataset.i;
+  if(a==='tab'){if(b.dataset.tab==='runde'&&!draft)editing=-1;go(b.dataset.tab);return;}
+  if(a==='new'){startDraft(-1);return;}
+  if(a==='edit'){startDraft(i);return;}
+  if(a==='type'){draft.type=v;draft.re=draft.re.slice(0,v==='solo'?1:2);fixSoloFlag();render();return;}
+  if(a==='re'){
+    const k=draft.re.indexOf(i);
+    if(k>=0)draft.re.splice(k,1);else{draft.re.push(i);if(draft.re.length>(draft.type==='solo'?1:2))draft.re.shift();}
+    fixSoloFlag();render();return;
+  }
+  if(a==='ex'){const k=b.dataset.k;draft.ex[k]=clamp(draft.ex[k]+(+b.dataset.d),0,EXMAX[k]);render();return;}
+  if(a==='save'){
+    if(problem(draft))return;
+    const r=clone(draft);
+    if(editing>=0)S.rounds[editing]=r;else S.rounds.push(r);
+    draft=null;editing=-1;save();go('block');return;
+  }
+  if(a==='cancel'){draft=null;editing=-1;go('block');return;}
+  if(a==='del'){
+    if(confirmKey!=='del'){confirmKey='del';render();return;}
+    S.rounds.splice(editing,1);draft=null;editing=-1;save();go('block');return;
+  }
+  if(a==='bockPlus'){
+    if(S.rounds.length)S.rounds[S.rounds.length-1].manualBock=(S.rounds[S.rounds.length-1].manualBock||0)+1;
+    else S.startBock=(S.startBock||0)+1;
+    save();render();return;
+  }
+  if(a==='copy'){
+    shareText=summaryText();msg='Kopieren wird versucht …';
+    const fail=()=>{msg='Kopieren nicht möglich. Text unten markieren und kopieren.';render();const t=$('#sharebox');if(t){t.focus();t.select();}};
+    try{
+      navigator.clipboard.writeText(shareText).then(()=>{msg='Stand in die Zwischenablage kopiert.';render();},fail);
+    }catch(err){fail();}
+    render();return;
+  }
+  if(a==='count'){
+    if(S.rounds.length)return;
+    const n=+v;while(S.players.length<n)S.players.push('Spieler '+(S.players.length+1));
+    S.players=S.players.slice(0,n);S.settings.bockLen=n;draft=null;save();render();return;
+  }
+  if(a==='startOwn'){
+    S.example=false;S.rounds=[];S.startBock=0;S.players=S.players.map((_,k)=>'Spieler '+(k+1));draft=null;save();go('regeln');return;
+  }
+  if(a==='newGame'){
+    if(confirmKey!=='new'){confirmKey='new';render();return;}
+    S.example=false;S.rounds=[];S.startBock=0;draft=null;save();go('block');return;
+  }
+  if(a==='resetSet'){
+    if(confirmKey!=='set'){confirmKey='set';render();return;}
+    S.settings=clone(DEF);S.settings.bockLen=S.players.length;confirmKey='';save();render();return;
+  }
+}
+
+function onChange(e){
+  const t=e.target;
+  if(t.dataset.set){
+    const k=t.dataset.set;
+    S.settings[k]=t.type==='checkbox'?t.checked:clamp(parseInt(t.value,10),+t.min,+t.max);
+    save();render();refocus('[data-set="'+k+'"]');return;
+  }
+  if(t.dataset.tbl){S.settings.table[t.dataset.tbl]=t.checked;save();render();refocus('[data-tbl="'+t.dataset.tbl+'"]');return;}
+  if(t.id==='eyes'){draft.reEyes=clamp(Math.round(+t.value),0,240);render();refocus('#eyes');return;}
+  const f=t.dataset.f;if(!f)return;
+  if(f==='dealer'){
+    draft.dealer=+t.value;draft.sit=sitFor(draft.dealer,S.players.length);
+    draft.re=draft.re.filter(i=>!draft.sit.includes(i));
+  }else if(f==='reAnn'||f==='konAnn')draft[f]=+t.value;
+  else if(f==='pflicht'||f==='manualBock')draft[f]=t.checked?1:0;
+  else draft[f]=t.value;
+  if(f==='pflicht')draft.pflicht=t.checked;
+  render();refocus('#'+t.id);
+}
+
+function onInput(e){
+  const t=e.target;
+  if(t.dataset.name!==undefined){
+    S.players[+t.dataset.name]=t.value;save();
+    const R=replay();void R;return;
+  }
+  if(t.dataset.notes){S.settings.notes=t.value;save();return;}
+  if(t.id==='eyesR'||t.id==='eyes'){
+    const v=clamp(Math.round(+t.value),0,240);
+    if(t.value===''&&t.id==='eyes')return;
+    draft.reEyes=v;
+    const o=t.id==='eyesR'?$('#eyes'):$('#eyesR');if(o)o.value=v;
+    updatePreview();
+  }
+}
+
+function init(){
+  S=load()||seed();
+  document.addEventListener('click',onClick);
+  document.addEventListener('change',onChange);
+  document.addEventListener('input',onInput);
+  render();
+}
+if(typeof document!=='undefined')init();
+</script>
+</body></html>
